@@ -3,17 +3,13 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/elastic/go-elasticsearch/v8"
-	"github.com/elastic/go-elasticsearch/v8/esapi"
+	"github.com/elastic/go-elasticsearch/esapi"
 )
-
-var es, _ = elasticsearch.NewDefaultClient()
 
 func LoadData() {
 	var spacecrafts []map[string]interface{}
@@ -25,13 +21,10 @@ func LoadData() {
 		var result map[string]interface{}
 		json.Unmarshal(body, &result)
 
-		pageInterface := result["page"]
-		page, _ := pageInterface.(map[string]interface{})
-		totalPagesInterface := page["totalPages"]
-		totalPages, _ := totalPagesInterface.(float64)
+		page := result["page"].(map[string]interface{})
+		totalPages := int(page["totalPages"].(float64))
 
-		spacecraftsInterface := result["spacecrafts"]
-		crafts, _ := spacecraftsInterface.([]interface{})
+		crafts := result["spacecrafts"].([]interface{})
 
 		for _, craftInterface := range crafts {
 			craft := craftInterface.(map[string]interface{})
@@ -39,7 +32,7 @@ func LoadData() {
 		}
 
 		pageNumber++
-		if pageNumber >= int(totalPages) {
+		if pageNumber >= totalPages {
 			break
 		}
 	}
@@ -51,9 +44,4 @@ func LoadData() {
 		request.Do(context.Background(), es)
 	}
 	print(len(spacecrafts), " spacecraft read\n")
-}
-
-func main() {
-	fmt.Println(es.Info())
-	LoadData()
 }
